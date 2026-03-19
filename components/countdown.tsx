@@ -22,7 +22,7 @@ const CountDown = ({
                 setTimeLeft("Expired");
 
                 try {
-                    const res = await fetch(`api/reservation/deleted/${reservationId}`,{
+                    const res = await fetch(`/api/reservation/deleted/${reservationId}`,{
                         method: 'DELETE'
                     });
                     if (res.ok) {
