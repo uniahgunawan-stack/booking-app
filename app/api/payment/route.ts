@@ -11,7 +11,7 @@ const snap = new Midtrans.Snap({
 
 export const POST = async (request: Request) => {
     try {
-        const reservation = await request.json() as reservationProps;
+        const reservation: reservationProps = await request.json()
         if (!reservation?.id || !reservation?.Payment) {
             return NextResponse.json({ error: "Data reservasi tidak lengkap" }, { status: 400 });
         }
@@ -25,9 +25,9 @@ export const POST = async (request: Request) => {
             return NextResponse.json({ token: payment.snapToken });
         }
         const parameter = {
-            transaction_detail: {
+            transaction_details: {
                 order_id: reservation.id,
-                gross_amount: payment.amount
+                gross_amount: reservation.Payment?.amount || 0,
             },
             credit_card: {
                 secure: true,
@@ -59,6 +59,8 @@ export const POST = async (request: Request) => {
         });
         return NextResponse.json({ token })
     } catch (error) {
+        console.error("Error generate snap token", error);
+        
         return NextResponse.json({
             error: "Gagal memproses pembayaran"
         }, { status: 500 })
