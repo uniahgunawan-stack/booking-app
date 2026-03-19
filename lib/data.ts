@@ -128,30 +128,34 @@ export const getReservationUserById = async () => {
   }
 
   try {
+    const now = new Date();
+
     const result = await prisma.reservation.findMany({
-      where: { userId: session.user.id },
+      where: {
+        userId: session.user.id,
+        OR: [
+          { Payment: { is: { status: "paid" } } },
+          {
+            Payment: {
+              is: {
+                status: "unpaid",
+                snapExpiry: { gt: now }
+              }
+            }
+          }
+        ]
+      },
       include: {
-        Room: {
-          select: {
-            name: true,
-            image: true,
-            price: true
-          }
-        },
-        User: {
-          select: {
-            name: true,
-            email: true,
-            phone: true,
-          }
-        },
+        Room: { select: { name: true, image: true, price: true } },
+        User: { select: { name: true, email: true, phone: true } },
         Payment: true
       },
       orderBy: { createdAt: "desc" }
-    })
+    });
     return result;
   } catch (error) {
     console.log(error);
+    return [];
   }
 };
 

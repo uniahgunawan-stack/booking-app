@@ -13,7 +13,7 @@ const MyReservationPage = async () => {
   if (!session || !session.user ) redirect("/signin")
   return (
     <div className="min-h-screen bg-slate-50 ">
-      <div className="max-w-7xl mx-auto mt-10 py-20 px-4">
+      <div className="max-w-7xl mx-auto mt-10 py-20 px-4 bg-slate-100">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-2xl text-gray-800 mt-2 font-bold">Hi, {session.user.name} </h3>

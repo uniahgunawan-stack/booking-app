@@ -3,13 +3,14 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { differenceInCalendarDays } from "date-fns";
 import Image from "next/image"
 import Link from "next/link";
-import { notFound } from "next/navigation";
-
-
+import PaymentStatus from "./PaymentStatus";
+import ReservationEmpty from "./reservation-empty";
 
 const MyReserveList = async () => {
     const reservation = await getReservationUserById();
-    if (!reservation) return notFound();
+    if (!reservation || reservation.length === 0 ){
+        return <ReservationEmpty/>
+    }
     return (
         <div className="">
             {reservation.map((item) => (
@@ -31,11 +32,11 @@ const MyReserveList = async () => {
                         />
                         <div className="flex items-center gap-1 mb-3 font-normal text-gray-700 w-full">
                             <div className="w-full">
-                                {item.Payment?.status === "paid" ? (
-                                    <div className="text-green-700 bg-green-100 rounded-sm font-bold text-center py-3 text-sm">Thank yuo purchase enjoy your Room </div>
-                                ) : (
-                                    <div className="text-red-500 bg-red-100 rounded-sm font-bold text-center py-3 text-sm">Please make payment for your room immediately </div>
-                                )}
+                                <PaymentStatus
+                                status={item.Payment?.status}
+                                expiryDate={item.Payment?.snapExpiry}
+                                reservationId={item.id}
+                                />
                                 <div className="flex items-center justify-between text-sm font-medium text-gray-900 truncate">
                                     <span>Room Name :</span>
                                     <span>{item.Room.name}</span>
