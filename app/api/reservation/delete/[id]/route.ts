@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { error } from "console";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE (req: Request,{params}:{params:{id: string}}){
+export async function DELETE(
+    req: NextRequest, 
+    { params }: { params: Promise<{ id: string }> } 
+){
     try {
-        const id = params.id;
+        const {id} = await params;
         const reservation = await prisma.reservation.findUnique({
             where: {id},
             include:{ Payment: true}
