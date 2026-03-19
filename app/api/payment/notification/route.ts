@@ -1,65 +1,54 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PaymentProps } from "@/type/payment";
-import crypto from "crypto"
+import crypto from "crypto";
 
 export const POST = async (request: Request) => {
-    const data: PaymentProps = await request.json()
-    const reservationId = data.order_id;
+    try {
+        const data = await request.json() as PaymentProps;
+        const {
+            order_id: reservationId,
+            transaction_status,
+            payment_type,
+            fraud_status,
+            status_code,
+            gross_amount,
+            signature_key,
+        } = data;
 
-    let responseData = null;
+        // Verification signature_key
+        const hashString = `${reservationId}${status_code}${gross_amount}${process.env.MIDTRANS_SERVER_KEY}`;
+        const hash = crypto.createHash("sha512").update(hashString).digest("hex");
 
-    const transactionStatus = data.transaction_status;
-    const paymentType = data.payment_type || null;
-    const fraudStatus = data.fraud_status;
-    const statusCode = data.status_code;
-    const grossAmount = data.gross_amount;
-    const signatureKey = data.signature_key;
+        if (signature_key !== hash) { return NextResponse.json({ error: "Invalid signature" }, { status: 400 }) }
 
-    const hash = crypto.createHash("sha512").update(`${reservationId}${statusCode}${grossAmount}${process.env.MIDTRANS_SERVER_KEY}`).digest("hex");
+        let newStatus: string = "pending"
 
-    if (signatureKey !== hash) {
-        return NextResponse.json({ error: "Missing signaute_key" }, { status: 400 })
-    }
-
-    if (transactionStatus == "capture") {
-        if (fraudStatus == "accept") {
-            const transaction = await prisma.payment.update({
-                data: {
-                    method: paymentType,
-                    status: "paid"
-                },
-                where: { reservationId }
-            });
-            responseData = transaction
+        if (transaction_status === "settlement") {
+            newStatus = "paid";
+        } else if (transaction_status === "capture") {
+            if (fraud_status === "accept") {
+                newStatus = "paid";
+            } else if (fraud_status === "accept") {
+                newStatus === "paid"
+            } else if (fraud_status === "challenge") {
+                newStatus === " pending"
+            }
+        } else if (["cancel", "deny", "expire"].includes(transaction_status)) {
+            newStatus = "failure;"
         }
-    } else if (transactionStatus == "settlement") {
-        const transaction = await prisma.payment.update({
+
+        const updatePayment = await prisma.payment.update({
+            where: { reservationId },
             data: {
-                method: paymentType,
-                status: "paid"
-            },
-            where: { reservationId }
+                method: payment_type || null,
+                status: newStatus,
+            }
         });
-        responseData = transaction
-    } else if (transactionStatus == "cencel" || transactionStatus == "deny" || transactionStatus == "expire") {
-        const transaction = await prisma.payment.update({
-            data: {
-                method: paymentType,
-                status: "failur"
-            },
-            where: { reservationId }
-        });
-        responseData = transaction
-    } else if (transactionStatus == "pending") {
-        const transaction = await prisma.payment.update({
-            data: {
-                method: paymentType,
-                status: "pending"
-            },
-            where: { reservationId }
-        });
-        responseData = transaction
+
+        return NextResponse.json({ succes: true, status: newStatus }, { status: 200 })
+
+    } catch (error) {
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
     }
-    return NextResponse.json({ responseData }, { status: 200 })
 }

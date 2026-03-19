@@ -32,8 +32,8 @@ const ReserveForm = (
 
     const excluDates = disableDate.map((item) => {
         return{
-            start: item.startdate,
-            end: item.endDate
+            start:new Date (item.startdate) ,
+            end: new Date (item.endDate) 
         }
     })
     return (
@@ -49,7 +49,7 @@ const ReserveForm = (
                         selectsRange={true}
                         excludeDateIntervals={excluDates}
                         onChange={handleDatechange}
-                        dateFormat={"dd-MM-YYYY"}
+                        dateFormat={"dd-MM-yyyy"}
                         wrapperClassName="w-full"
                         className="py-2 px-4 rounded-md border border-gray-300 w-full"
                     />
