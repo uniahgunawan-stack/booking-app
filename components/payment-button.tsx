@@ -1,7 +1,6 @@
 "use client"
 
 import { reservationProps } from "@/type/reservation"
-import { error } from "console";
 import { useTransition } from "react";
 
 declare global {
@@ -32,6 +31,7 @@ const PaymentButton = (
 
                 const data = await response.json()
                 const token = data.token;
+                
                 if (!token || typeof token !== "string") {
                     throw new Error("Token tidak valid atau tidak di temukan")
                 }

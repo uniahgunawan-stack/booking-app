@@ -68,7 +68,8 @@ model Payment{
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  snapToken String?
+  snapExpiry DateTime?
   reservationId String @unique
   Reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 }
