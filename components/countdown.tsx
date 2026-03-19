@@ -11,36 +11,43 @@ const CountDown = ({
     const [timeLeft, setTimeLeft] = useState<string>("");
     const router = useRouter();
 
-    useEffect(() => {
-        const target = new Date(expiryDate).getTime();
-        const interval = setInterval(async () => {
-            const now = new Date().getTime();
-            const distance = target - now;
+    useEffect(() => {    
+    const target = new Date(expiryDate).getTime();
 
-            if (distance < 0) {
-                clearInterval(interval);
-                setTimeLeft("Expired");
+    const updateCountdown = async () => {
+        const now = new Date().getTime();
+        const distance = target - now;
 
-                try {
-                    const res = await fetch(`/api/reservation/deleted/${reservationId}`,{
-                        method: 'DELETE'
-                    });
-                    if (res.ok) {
-                        router.refresh()
-                    }
-                } catch (error) {
-                    console.error(error);
-                } return;
+        if (distance <= 0) {
+            setTimeLeft("Expired");
+            try {
+                
+                const res = await fetch(`/api/reservation/deleted/${reservationId}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) router.refresh();
+            } catch (error) {
+                console.error("Failed to delete reservation:", error);
             }
+            return true;
+        }
 
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            setTimeLeft(`${hours}j ${minutes}m ${seconds}s`)
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [expiryDate, reservationId, router]);
+        setTimeLeft(`${hours}j ${minutes}m ${seconds}s`);
+        return false;
+    };
+    updateCountdown();
+
+    const interval = setInterval(async () => {
+        const isExpired = await updateCountdown();
+        if (isExpired) clearInterval(interval);
+    }, 1000);
+
+    return () => clearInterval(interval);
+}, [expiryDate, reservationId, router]);
     return (
         <span className="font-mono text-red-600 bg-red-50 px-2 py-1 rounded"
         >{timeLeft || "Loading..."}</span>
