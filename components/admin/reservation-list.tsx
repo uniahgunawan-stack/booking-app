@@ -7,7 +7,7 @@ const ReservationList = async () => {
     if (!reservation) return <p>No Room Found</p>
 
     return (
-        <div className="bg-white p-4 shadow-sm mt-5">
+        <div className="bg-white p-4 shadow-sm mt-5 overflow-hidden">
             <table className='w-full divide-y divide-gray-200'>
                 <thead>
                     <tr>
