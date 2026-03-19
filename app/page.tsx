@@ -10,7 +10,7 @@ export default function Home() {
           <h1 className="text-4xl font-bold uppercase">Rooms & rate</h1> 
           <p className="py-3 ">Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis, at!</p>
         </div> 
-        <h3 className="text-5xl text-center font-bold text-red-500">tonton vidio di menit 7.03.50</h3>       
+        {/* <h3 className="text-5xl text-center font-bold text-red-500">tonton vidio di menit 7.03.50</h3>        */}
         <Main/>
       </div>
       
