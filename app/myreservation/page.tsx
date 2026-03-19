@@ -16,7 +16,7 @@ const MyReservationPage = async () => {
       <div className="max-w-7xl mx-auto mt-10 py-20 px-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl text-gray-800 mt-2">Hi, {session.user.name} </h3>
+            <h3 className="text-2xl text-gray-800 mt-2 font-bold">Hi, {session.user.name} </h3>
             <p className="mt-1 font-medium mb-4">Here&apos;s Your History</p>
           </div>
         </div>
