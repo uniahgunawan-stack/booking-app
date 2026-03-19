@@ -16,24 +16,27 @@ const ReserveForm = (
         disableDate: DisableDateProps[];
 
     }) => {
-    const StartDate = new Date()
-    const EndDate = addDays(StartDate, 1);
-    const [startDate, setStartDate] = useState(StartDate);
-    const [endDate, setEndDate] = useState(EndDate);
+
+    const [startDate, setStartDate] = useState<Date | null>(null);
+    const [endDate, setEndDate] = useState<Date | null>(null);
 
     const handleDatechange = (dates: [Date | null, Date | null]) => {
-        const [star, end] = dates;
-        setStartDate(star ?? StartDate);
-        setEndDate(end ?? EndDate);
+        const [newStart, newEnd] = dates;
+        setStartDate(newStart);
+        setEndDate(newEnd);
     };
 
-    const [state, formAction, isPending] = useActionState(createReserve.bind(null, room.id, room.price, startDate, endDate),
-        null);
+
+    const boundAction = startDate && endDate
+        ? createReserve.bind(null, room.id, room.price, startDate, endDate)
+        : () => ({ messageDate: "Pilih tanggal dulu" });
+
+        const [state, formAction, isPending] = useActionState(boundAction, null)
 
     const excluDates = disableDate.map((item) => {
-        return{
-            start:new Date (item.startdate) ,
-            end: new Date (item.endDate) 
+        return {
+            start: new Date(item.startdate),
+            end: new Date(item.endDate)
         }
     })
     return (
@@ -46,6 +49,7 @@ const ReserveForm = (
                         startDate={startDate}
                         endDate={endDate}
                         minDate={new Date()}
+                        filterDate={(data) => true}
                         selectsRange={true}
                         excludeDateIntervals={excluDates}
                         onChange={handleDatechange}
