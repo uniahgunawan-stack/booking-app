@@ -4,8 +4,6 @@ import { notFound } from "next/navigation";
 import { IoBan, IoCheckmark, IoPeopleOutline } from "react-icons/io5";
 import { formatCurrency } from "@/lib/utils";
 import ReserveForm from "@/components/reserve-form";
-import { clsx } from "clsx";
-
 
 const RoomDetail = async ({ roomId }: { roomId: string }) => {
     const [room, disableDate] = await Promise.all([getRoomDetailById(roomId), getDisableRoomById(roomId)]);
@@ -22,7 +20,7 @@ const RoomDetail = async ({ roomId }: { roomId: string }) => {
                     className="w-full rounded-sm mb-8"
                 />
                 <h1 className="text-5xl font-semibold text-gray-900 mb-8">{room.name}</h1>
-                <p>{room.description}</p>
+                <p className="whitespace-pre-wrap mb-4">{room.description}</p>
                 <h5 className="text-lg font-bold py-1 mt-1 ">Amenities :</h5>
                 <div className="grid md:grid-cols-3">
                     {room.RoomAmenities.map((item) => (

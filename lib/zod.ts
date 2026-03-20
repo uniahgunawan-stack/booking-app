@@ -12,8 +12,8 @@ export const RoomSchema = object ({
 })
 
 export const ReserveSchema = object ({
-    name: string().min(1),
-    phone: string().min(10),
+    name: string().min(4, "Please enter your name, minimum 4 characters."),
+    phone: string().min(10,"Please enter number phone").max(13, "At maximum 13 characters"),
     
 })
 
