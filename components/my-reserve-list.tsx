@@ -12,7 +12,7 @@ const MyReserveList = async () => {
         return <ReservationEmpty />
     }
     return (
-        <div className="">
+        <div>
             {reservation.map((item) => {
                 const payment = item.Payment;
                 const hasPayment = !!payment;
@@ -44,8 +44,9 @@ const MyReserveList = async () => {
                                 className="object-cover w-full rounded-t-sm h-60 md:w-1/3 md: rounded-none md: rounded-s-sm"
                                 alt="Image room"
                             />
+                            {/* detail reservatiaon */}
                             <div className="flex items-center gap-1 mb-3 font-normal text-gray-700 w-full">
-                                <div className="w-full">
+                                <div className="pt-2 md:pt-0 w-full">
                                     <PaymentStatus
                                         status={item.Payment?.status}
                                         expiryDate={item.Payment?.snapExpiry}
@@ -81,7 +82,7 @@ const MyReserveList = async () => {
                             </div>
                         </div>
                         {/* ButtonPay */}
-                        <div className="flex items-end justify-end absolute inset-4">
+                        <div className="flex justify-center items-end md:items-end md:justify-end absolute inset-3">
                             {isPaid ? (
                                 <Link
                                     href={`/myreservation/${item.id}`}
@@ -120,13 +121,9 @@ const MyReserveList = async () => {
                             )}
                         </div>
                     </div>
-
                 )
             }
-
-
             )}
-
         </div>
     )
 }
