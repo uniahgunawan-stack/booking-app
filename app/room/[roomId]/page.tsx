@@ -1,4 +1,5 @@
 import RoomDetail from "@/components/room-detail";
+import Roomdetailskeleton from "@/components/skeleton/roomdetailskeleton";
 import { Metadata } from "next"
 import { Suspense } from "react";
 
@@ -14,7 +15,7 @@ const RoomDetailPage = async ({
     const roomId = (await params).roomId;
   return (
     <div className="mt-16">
-        <Suspense fallback={<p>Loading...</p>}>
+        <Suspense fallback={<Roomdetailskeleton/>}>
             <RoomDetail roomId={roomId}/>
         </Suspense>
         

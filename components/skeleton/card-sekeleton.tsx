@@ -17,7 +17,7 @@ const CardSkeleton = () => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                     <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                    <div className="h-4 w-12 rounded-full bg-gray-200"></div>
+                    <div className="h-8 w-20 rounded-full bg-gray-200"></div>
                 </div>
                 {/* placeholder tombol */}
                 <div className="h-10 w-28 rounded bg-gray-200"></div>

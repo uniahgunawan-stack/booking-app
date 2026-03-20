@@ -14,7 +14,7 @@ const raleway = Raleway({
 
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Dhalisa Hotel",
   description: "belajar membuat app booking hotel",
 };
 
