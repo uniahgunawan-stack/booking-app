@@ -21,6 +21,8 @@ model Room {
   image String
   price Int
   capacity Int @default(1)
+  stock Int 
+
   RoomAmenities RoomAmenities[]
   Reservation Reservation[]
 

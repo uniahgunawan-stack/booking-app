@@ -19,6 +19,9 @@ const RoomTable = async () => {
                         <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
                             Room Name
                         </th>
+                         <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
+                            Available
+                        </th>
                         <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
                             Price
                         </th>
@@ -40,6 +43,9 @@ const RoomTable = async () => {
                                 </div>
                             </td>
                             <td className='px-6 py-4'>{room.name}</td>
+                            <td className={`px-6 py-6 ${room.stock === 0 ? "text-red-500 capitalize": null}`}>
+                                {room.stock === 0 ? "habis" : room.stock}
+                            </td>
                             <td className='px-6 py-4'>{formatCurrency(room.price)}</td>
                             <td className='px-6 py-4'>{formatDate(room.createdAt.toString())}</td>
                             <td className='px-6 py-4 text-right'>

@@ -168,6 +168,16 @@ const EditForm = ({
                             <span className="text-sm text-red-500 mt-2">{state?.error?.price}</span>
                         </div>
                     </div>
+                    <div className="mb-4">
+                        <input type="text"
+                            name="stock"
+                            defaultValue={room.stock}
+                            placeholder="rooms available.."
+                            className="py-2 px-4 rounded-sm border border-gray-400 w-full" />
+                        <div aria-live="polite" aria-atomic="true">
+                            <span className="text-sm text-red-500 mt-2">{state?.error?.stock}</span>
+                        </div>
+                    </div>
                     {/* General mesage */}
                     {state?.message ? (
                         <div className="mb-4 bg-red-200 p-2">

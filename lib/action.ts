@@ -22,6 +22,7 @@ export const SaveRoom = async (
         capacity: formData.get("capacity"),
         price: formData.get("price"),
         amenities: formData.getAll("amenities"),
+        stock:formData.get("stock")
     };
 
     const validatefields = RoomSchema.safeParse(rawData);
@@ -29,12 +30,12 @@ export const SaveRoom = async (
     if (!validatefields.success) {
         return { error: validatefields.error.flatten().fieldErrors }
     }
-    const { name, description, price, capacity, amenities } = validatefields.data;
+    const { name, description, price, capacity, amenities, stock } = validatefields.data;
 
     try {
         await prisma.room.create({
             data: {
-                name, description, image, price, capacity, RoomAmenities: {
+                name, description, image, price, capacity, stock, RoomAmenities: {
                     createMany: {
                         data: amenities.map((item) => ({
                             amenitiesId: item
@@ -103,6 +104,7 @@ export const updateRoom = async (
         capacity: formData.get("capacity"),
         price: formData.get("price"),
         amenities: formData.getAll("amenities"),
+        stock: formData.get("stock"),
     };
 
     const validatefields = RoomSchema.safeParse(rawData);
@@ -110,7 +112,7 @@ export const updateRoom = async (
     if (!validatefields.success) {
         return { error: validatefields.error.flatten().fieldErrors }
     }
-    const { name, description, price, capacity, amenities, } = validatefields.data;
+    const { name, description, price, capacity, amenities, stock } = validatefields.data;
 
     try {
         await prisma.$transaction(async (tx) => {
@@ -126,6 +128,7 @@ export const updateRoom = async (
                     image,
                     price,
                     capacity,
+                    stock,
                 }
             });
 

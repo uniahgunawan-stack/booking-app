@@ -85,14 +85,13 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
                                 <input type="checkbox"
                                     name="amenities"
                                     defaultValue={item.id}
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded" />
+                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
                                 <label
                                     className="ms-2 text-sm font-medium text-gray-900 capitalize"
                                 >{item.name}
                                 </label>
                             </div>
                         ))}
-
                         <div aria-live="polite" aria-atomic="true">
                             <span className="text-sm text-red-500 mt-2">{state?.error?.amenities}</span>
                         </div>
@@ -156,6 +155,15 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
                             <span className="text-sm text-red-500 mt-2">{state?.error?.price}</span>
                         </div>
                     </div>
+                    <div className="mb-4">
+                        <input type="text"
+                            name="stock"
+                            placeholder="rooms available.."
+                            className="py-2 px-4 rounded-sm border border-gray-400 w-full" />
+                        <div aria-live="polite" aria-atomic="true">
+                            <span className="text-sm text-red-500 mt-2">{state?.error?.stock}</span>
+                        </div>
+                    </div>
                     {/* General mesage */}
                     {state?.message ? (
                         <div className="mb-4 bg-red-200 p-2">
@@ -165,7 +173,7 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
                     {/* button */}
                     <button type="submit"
                         disabled={isPending}
-                        className={clsx("bg-orange-400 text-white w-full hover:bg-orange-500 py-2.5 px-6 md:px-10 text-lg cursor-pointer font-semibold",
+                        className={clsx("bg-orange-400 text-white w-full hover:bg-orange-500 py-2.5 px-6 md:px-10 text-lg cursor-pointer font-semibold rounded-sm",
                             { "opacity-50 cursor-progress": isPending }
                         )}>
                         {isPending ? "Savingg... " : "Save"}

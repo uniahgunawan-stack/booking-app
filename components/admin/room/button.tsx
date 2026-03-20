@@ -15,7 +15,7 @@ export const DelleteButton = ({ id, image }: { id: string; image: string }) => {
     return (
         <form action={deletRoomId}>
             <button type="submit"
-                className="rounded-sm hover:bg-gray-200 cursor-pointer">
+                className="rounded-sm hover:p-1 cursor-pointer hover:text-white hover:bg-red-500">
                 <IoTrashOutline className="size-4" />
             </button>
         </form>

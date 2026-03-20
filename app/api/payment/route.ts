@@ -12,8 +12,21 @@ const snap = new Midtrans.Snap({
 export const POST = async (request: Request) => {
     try {
         const reservation: reservationProps = await request.json()
-        if (!reservation?.id || !reservation?.Payment) {
-            return NextResponse.json({ error: "Data reservasi tidak lengkap" }, { status: 400 });
+        if (!reservation?.id || !reservation?.Payment || reservation?.roomId) {
+            return NextResponse.json({ error: "Data reservasi tidak lengkap" }, { status: 409 });
+        }
+
+        const room = await prisma.room.findUnique({
+            where :{ id: reservation.roomId},
+            select :{ stock: true, name: true},
+        });
+        if (!room) {
+            return NextResponse.json({error: "Kamar tidak di temukan"},{status:404})
+        }
+        if(room.stock <= 0) {
+            return NextResponse.json({
+                error:"Maaf, kamar ini sudah di pesan oleh tamu lain",roomName: room.name,
+            },{status:409});
         }
 
         const payment = reservation.Payment;
@@ -32,7 +45,7 @@ export const POST = async (request: Request) => {
             credit_card: {
                 secure: true,
             },
-            customer_detail: {
+            customer_details: {
                 first_name: reservation.User?.name || "Custemer",
                 email: reservation.User?.email || "customer@example.com",
                 phone: reservation.User?.phone || "",

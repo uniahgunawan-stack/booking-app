@@ -29,7 +29,7 @@ const ReserveForm = (
 
     const boundAction = startDate && endDate
         ? createReserve.bind(null, room.id, room.price, startDate, endDate)
-        : () => ({ messageDate: "Pilih tanggal dulu" });
+        : () => ({ messageDate: "Please enter the reservation date" });
 
         const [state, formAction, isPending] = useActionState(boundAction, null)
 

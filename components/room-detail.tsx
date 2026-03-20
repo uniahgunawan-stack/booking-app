@@ -1,9 +1,10 @@
 import Image from "next/image"
 import { getRoomDetailById, getDisableRoomById } from "@/lib/data"
 import { notFound } from "next/navigation";
-import { IoCheckmark, IoPeopleOutline } from "react-icons/io5";
+import { IoBan, IoCheckmark, IoPeopleOutline } from "react-icons/io5";
 import { formatCurrency } from "@/lib/utils";
 import ReserveForm from "@/components/reserve-form";
+import { clsx } from "clsx";
 
 
 const RoomDetail = async ({ roomId }: { roomId: string }) => {
@@ -48,7 +49,17 @@ const RoomDetail = async ({ roomId }: { roomId: string }) => {
                         </div>
                     </div>
                     {/* Reservation form */}
-                    <ReserveForm room={room} disableDate ={disableDate}/>
+                    {room.stock === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-4 space-y-2 text-red-600">
+                            <IoBan className="size-12"/>
+                            <span className="font-bold text-xl uppercase tracking-wide">Room Not Available</span>
+                            <p className="text-sm text-center text-gray-900">Sorry, this room is out of stock</p>
+                        </div>
+                    ):
+                    (
+                       <ReserveForm room={room} disableDate={disableDate} /> 
+                    )}
+                    
                 </div>
             </div>
         </div>

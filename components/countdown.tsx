@@ -11,7 +11,7 @@ const CountDown = ({
     const router = useRouter();
 
     useEffect(() => {
-        let isMounted = true; // Kontrol untuk mencegah memory leak
+        let isMounted = true;
         const target = new Date(expiryDate).getTime();
 
         const updateCountdown = async () => {
@@ -21,7 +21,6 @@ const CountDown = ({
             if (distance <= 0) {
                 if (isMounted) setTimeLeft("Expired");
                 try {
-                    // Pastikan URL "/delete/" sesuai dengan struktur folder API Anda
                     const res = await fetch(`/api/reservation/delete/${reservationId}`, {
                         method: 'DELETE'
                     });

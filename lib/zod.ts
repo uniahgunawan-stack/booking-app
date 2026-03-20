@@ -8,6 +8,7 @@ export const RoomSchema = object ({
     capacity: coerce.number().gt(0),
     price:coerce.number().gt(0),
     amenities: array(string()).nonempty(),
+    stock: coerce.number().min(1, "Stock kamar minimal 1").max(5,"Melebihi batas kapasitas 5 "),
 })
 
 export const ReserveSchema = object ({
