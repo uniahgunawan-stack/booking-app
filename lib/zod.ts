@@ -1,5 +1,5 @@
 
-import { object, string, coerce, array } from "zod"; 
+import z, { object, string, coerce, array } from "zod"; 
 
 
 export const RoomSchema = object ({
@@ -23,6 +23,20 @@ export const ContactSchema = object ({
     subject: string().min(6, "name at least 6 Characters"),
     message: string().min(50, "message at least 50 characters.").max(200, "message maximun 200 characters")
 });
+
+export const SignupSchema = object({
+    name: z.string().min(4, "Name at least 4 Characters"),
+    email: z.string().min(6,"Email to Short"),
+    password: z.string().min(7, "Password at least  Characters"),
+    confirmPassword: z.string().min(7, "Password at least  Characters")
+}).refine((data) => data.password === data.confirmPassword, {
+    message:"Password does not match",
+    path:["confirmPassword"]
+})
+export const SigninSchema = object({
+    email: string().min(6,"Email to Short"),
+    password: string().min(7, "Password at least  Characters")
+})
 
 
 

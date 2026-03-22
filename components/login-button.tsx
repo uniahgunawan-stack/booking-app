@@ -1,4 +1,4 @@
-import { signIn } from "@/auth";
+import { signIn } from "@/lib/auth";
 import { FaG } from "react-icons/fa6"
 
 

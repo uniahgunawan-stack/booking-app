@@ -1,5 +1,8 @@
 import { LoginGoogleButton } from "@/components/login-button"
+import SignForm from "@/components/navbar/sign-form";
+import SignreduceForm from "@/components/navbar/signreduce-form";
 import { Metadata } from "next"
+import Image from "next/image";
 
 export const metadata: Metadata = {
     title: "Sign in"
@@ -18,14 +21,28 @@ const SigninPage = async ({
         redirectUrl = `/${params}`
     }
     return (
-        <div className="min-h-screen flex items-center">
-            <div className="bg-white w-96 mx-auto rounded-sm shadow p-8">
-                <h1 className="text-4xl font-bold mb-1">Sign In</h1>
-                <p className="font-medium mb-5 text-gray-500">Sign In tou your acount</p>
+        <div className="min-h-screen flex items-center relative justify-center">
+            <div className="inset-0 z-10">
+                
+            </div>
+            <div className="absolute inset-0 bg-black/40">
+            <Image 
+                src="/login-bg.png"
+                fill
+                alt="image-log"
+                />
+            </div>
+            <section className="">
+                <div className=" bg-white/20 w-100 backdrop-blur-md mx-auto rounded shadow-xl p-4">
+                <h1 className="text-2xl font-bold capitalize text-center mb-8 ">Walcome dhalisa hotel</h1>                
+                {/* <SignForm/> */}
+                <SignreduceForm/>
                 <div className="py-4 text-center">
                     <LoginGoogleButton redirectUrl={redirectUrl}/>
                 </div>
             </div>
+            </section>
+            
         </div>
     )
 }

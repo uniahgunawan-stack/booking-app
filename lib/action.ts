@@ -1,13 +1,15 @@
 "use server"
-import { ContactSchema, ReserveSchema, RoomSchema } from "@/lib/zod";
+import { ContactSchema, ReserveSchema, RoomSchema, SigninSchema, SignupSchema } from "@/lib/zod";
 import { prisma } from "@/lib/prisma";
 import { redirect, } from "next/navigation";
 import { del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
-import { error } from "console";
 import { differenceInCalendarDays } from "date-fns";
-
+import { auth } from "@/lib/auth";
+import { email, success } from "zod";
+import { error } from "console";
+import bcrypt from "bcryptjs";
+import { FormState } from "@/type/signupType";
 
 export const SaveRoom = async (
     image: string,
@@ -22,7 +24,7 @@ export const SaveRoom = async (
         capacity: formData.get("capacity"),
         price: formData.get("price"),
         amenities: formData.getAll("amenities"),
-        stock:formData.get("stock")
+        stock: formData.get("stock")
     };
 
     const validatefields = RoomSchema.safeParse(rawData);
@@ -71,6 +73,7 @@ export const ContactMessage = async (prevState: unknown, formData: FormData) => 
         console.log(error)
     }
 }
+
 
 //Deleteroom
 
@@ -205,8 +208,58 @@ export const createReserve = async (
             reservationId = reservation.id
         })
     } catch (error) {
-        console.log(error);        
+        console.log(error);
     }
     redirect(`/checkout/${reservationId}`)
 
 }
+
+export async function signupActions(
+    prevState: unknown, formData: FormData
+): Promise<FormState> {
+    const data = {
+        name: formData.get("name") as string,
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+        confirmPassword: formData.get("confirmPassword") as string,
+    };
+
+    const validatefields = SignupSchema.safeParse(data);
+
+    if (!validatefields.success) {
+        return {
+            success: false,
+            message: "Gagal memvalidasi",
+            errors: validatefields.error.flatten().fieldErrors
+        }
+    };
+    const { name, email, password } = validatefields.data;
+    const exisUser = await prisma.user.findUnique({
+        where: { email }
+    });
+
+    if (exisUser) {
+        return {
+            success: false,
+            message:"Gagal dafter",
+            errors: { email: ["Email ini sudah terdafatar"] }
+        }
+    };
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+        data: {
+            name,
+            email,
+            password: hashedPassword,
+            role: "user"
+        }
+    });
+    return {
+        success: true,
+        message: "Email berhasil di daftarkan",
+        errors: {}
+    }
+}
+

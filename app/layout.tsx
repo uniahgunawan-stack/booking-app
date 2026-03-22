@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
 import { SessionProvider } from "next-auth/react";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 
 const raleway = Raleway({
   variable: "--font-ralewaye",

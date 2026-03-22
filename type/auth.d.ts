@@ -17,3 +17,13 @@ declare module "next-auth/jwt"{
         role?: string;
     } 
 }
+
+export type AuthState = {
+    success?: boolean;
+    message?: string;
+    error?: {
+        name?: string[];
+        email?: string[];
+        password?: string[];
+    };
+}

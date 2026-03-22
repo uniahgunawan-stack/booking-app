@@ -1,6 +1,6 @@
 import MyReserveList from "@/components/my-reserve-list";
 import { Metadata } from "next";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 
