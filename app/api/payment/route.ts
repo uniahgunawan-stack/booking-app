@@ -12,8 +12,9 @@ const snap = new Midtrans.Snap({
 export const POST = async (request: Request) => {
     try {
         const reservation: reservationProps = await request.json()
-        if (!reservation?.id || !reservation?.Payment || reservation?.roomId) {
-            return NextResponse.json({ error: "Data reservasi tidak lengkap" }, { status: 409 });
+        
+        if (!reservation?.id || !reservation?.Payment || !reservation?.roomId) {
+            return NextResponse.json({ error: "Data reservasi tidak lengkap" }, { status: 400 });
         }
 
         const room = await prisma.room.findUnique({

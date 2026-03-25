@@ -29,14 +29,9 @@ const PaymentButton = (
                 const response = await fetch("/api/payment", {
                     method: "POST",
                     body: JSON.stringify(reservation)
-                });
-
-                // if (!response.ok) {
-                //     throw new Error(`API error: ${response.status}`)
-                // }
-
+                });;
+                
                 const data = await response.json()
-
                 if (response.status === 409) {
                     setError({
                         roomName: data.roomName,
@@ -44,9 +39,8 @@ const PaymentButton = (
                     });
                     return;
                 }
-
                 if (!response.ok) {
-                    throw new Error(data.error || "Gagal memproses pembayaran")
+                    throw new Error(`API error: ${response.status}`)
                 }
 
                 const token = data.token;

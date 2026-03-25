@@ -19,7 +19,7 @@ const RoomTable = async () => {
                         <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
                             Room Name
                         </th>
-                         <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
+                        <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
                             Available
                         </th>
                         <th className='px-6 py-3 text-sm font-bold text-gray-700 uppercase text-left'>
@@ -38,12 +38,16 @@ const RoomTable = async () => {
                         <tr className='hover:bg-gray-100' key={room.id}>
                             <td className='px-6 py-4'>
                                 <div className="h-20 w-32 relative">
-                                    <Image src={room.image} fill sizes="20vw"
-                                        alt="room image" className="object-cover" />
+                                    <img
+                                        src={room.image}
+                                        sizes="20vw"
+                                        alt="room image"
+                                        className="object-cover"
+                                         />
                                 </div>
                             </td>
                             <td className='px-6 py-4'>{room.name}</td>
-                            <td className={`px-6 py-6 ${room.stock === 0 ? "text-red-500 capitalize": null}`}>
+                            <td className={`px-6 py-6 ${room.stock === 0 ? "text-red-500 capitalize" : null}`}>
                                 {room.stock === 0 ? "habis" : room.stock}
                             </td>
                             <td className='px-6 py-4'>{formatCurrency(room.price)}</td>

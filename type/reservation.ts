@@ -7,6 +7,7 @@ export type reservationProps = Prisma.ReservationGetPayload<{
                 name: true,
                 image: true,
                 price: true,
+                stock: true,
             }
         },
         User: {

@@ -1,56 +1,17 @@
 "use server"
-import { ContactSchema, ReserveSchema, RoomSchema, SigninSchema, SignupSchema } from "@/lib/zod";
+import { ContactSchema, ReserveSchema, RoomSchema, SignupSchema } from "@/lib/zod";
 import { prisma } from "@/lib/prisma";
 import { redirect, } from "next/navigation";
-import { del } from "@vercel/blob";
+import { del, put, PutBlobResult } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { differenceInCalendarDays } from "date-fns";
 import { auth } from "@/lib/auth";
-import { email, success } from "zod";
-import { error } from "console";
 import bcrypt from "bcryptjs";
 import { FormState } from "@/type/signupType";
+import { resolve } from "path";
+import { success } from "zod";
 
-export const SaveRoom = async (
-    image: string,
-    prevState: unknown,
-    formData: FormData
-) => {
-    if (!image) return { message: " Image Is Required." }
 
-    const rawData = {
-        name: formData.get("name"),
-        description: formData.get("description"),
-        capacity: formData.get("capacity"),
-        price: formData.get("price"),
-        amenities: formData.getAll("amenities"),
-        stock: formData.get("stock")
-    };
-
-    const validatefields = RoomSchema.safeParse(rawData);
-
-    if (!validatefields.success) {
-        return { error: validatefields.error.flatten().fieldErrors }
-    }
-    const { name, description, price, capacity, amenities, stock } = validatefields.data;
-
-    try {
-        await prisma.room.create({
-            data: {
-                name, description, image, price, capacity, stock, RoomAmenities: {
-                    createMany: {
-                        data: amenities.map((item) => ({
-                            amenitiesId: item
-                        }))
-                    }
-                }
-            }
-        })
-    } catch (error) {
-        console.log(error);
-    }
-    redirect("/admin/room")
-}
 
 export const ContactMessage = async (prevState: unknown, formData: FormData) => {
     const validatefields = ContactSchema.safeParse(Object.fromEntries(formData.entries()))
@@ -92,16 +53,79 @@ export const DeleteRoom = async (
     revalidatePath("/admin/room")
 };
 
-// updateroom
-export const updateRoom = async (
-    image: string,
-    roomId: string,
-    prevState: unknown,
+export const SaveRoom = async (
+    // image:string,
+    prevState: any,
     formData: FormData
 ) => {
-    if (!image) return { message: " Image Is Required." }
-
     const rawData = {
+        name: formData.get("name"),
+        description: formData.get("description"),
+        capacity: formData.get("capacity"),
+        price: formData.get("price"),
+        amenities: formData.getAll("amenities"),
+        stock: formData.get("stock")
+    };
+    const file = formData.get('image') as File
+
+    if (!file || file.size === 0) {
+        return {
+            message: "Image is required",
+            prevState: rawData
+        }
+    }
+
+    let imageUrl: string;
+    try {
+        const { url } = await put(file.name || `room-${Date.now}.jpg`, file, {
+            access: 'public',
+        })
+        imageUrl = url
+    } catch (error) {
+        console.error("Upload error", error);
+        return { message: "Gagal upload gambar ke server",prevState:rawData }
+    }
+
+
+
+    const validatefields = RoomSchema.safeParse(rawData);
+
+    if (!validatefields.success) {
+        return {
+            error: validatefields.error.flatten().fieldErrors,
+            success: false,
+            prevState: rawData
+        }
+    }
+    const { name, description, price, capacity, amenities, stock } = validatefields.data;
+
+    try {
+        await prisma.room.create({
+            data: {
+                name, description, image: imageUrl, price, capacity, stock, RoomAmenities: {
+                    createMany: {
+                        data: amenities.map((item) => ({
+                            amenitiesId: item
+                        }))
+                    }
+                }
+            }
+        })
+    } catch (error) {
+        console.log(error);
+    }
+    revalidatePath("/admin/room")
+    redirect("/admin/room")
+}
+
+// updateroom
+export const updateRoom = async (
+    // image: string,
+    // roomId: string,
+    prevState: any,
+    formData: FormData
+) => {
+     const rawData = {
         name: formData.get("name"),
         description: formData.get("description"),
         capacity: formData.get("capacity"),
@@ -110,10 +134,53 @@ export const updateRoom = async (
         stock: formData.get("stock"),
     };
 
+
+    const file = formData.get("image") as File
+    const imageStatus = (formData.get("imageStatus") as string || "unchanged")
+
+    const originalImage = formData.get("originalImage") as string;
+    const roomId = formData.get("roomId") as string
+
+    let finalImageUrl = originalImage;
+    console.log("image old:", originalImage);
+
+
+    if (imageStatus === "new" && file && file.size > 0) {
+        const { url } = await put(file.name || `room-${Date.now()}.jpg`, file, {
+            access: "public",
+            multipart: true,
+            allowOverwrite: true
+        });
+        finalImageUrl = url
+        if (originalImage) {
+            try {
+                await del(originalImage)
+            } catch (error) {
+                console.error("Gagal Hapus gambar lama", error);
+
+            }
+        }
+    }
+    else if (imageStatus === "removed") {
+        if (originalImage) {
+            try {
+                await del(originalImage)
+            } catch (error) {
+                console.error("Gagal hapus gambar lama", error);
+
+            }
+        } finalImageUrl = "";
+    }
+    if (!finalImageUrl) return { message: "Image is Required", prevState:rawData }
+
+   
     const validatefields = RoomSchema.safeParse(rawData);
 
     if (!validatefields.success) {
-        return { error: validatefields.error.flatten().fieldErrors }
+        return { error: validatefields.error.flatten().fieldErrors,
+            success:false,
+            prevState:rawData
+         }
     }
     const { name, description, price, capacity, amenities, stock } = validatefields.data;
 
@@ -128,7 +195,7 @@ export const updateRoom = async (
                 data: {
                     name,
                     description,
-                    image,
+                    image: finalImageUrl,
                     price,
                     capacity,
                     stock,
@@ -241,7 +308,7 @@ export async function signupActions(
     if (exisUser) {
         return {
             success: false,
-            message:"Gagal dafter",
+            message: "Gagal dafter",
             errors: { email: ["Email ini sudah terdafatar"] }
         }
     };

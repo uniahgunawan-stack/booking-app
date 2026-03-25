@@ -84,6 +84,7 @@ export const getReservationById = async (id: string) => {
             name: true,
             image: true,
             price: true,
+            stock: true
           }
         },
         User: {

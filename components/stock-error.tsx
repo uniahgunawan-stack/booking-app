@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link";
-import { HiFaceFrown } from "react-icons/hi2";
 import { useRouter } from "next/navigation"
 import { useEffect, } from "react";
+import { IoAlertCircleOutline } from "react-icons/io5";
 
 interface StockErrorProps {
     message?: string,
@@ -28,7 +28,7 @@ const StockError = ({ message, roomName }: StockErrorProps) => {
         <div className="max-w-7xl mx-auto mt-12 p-8 bg-white border border-red-200 rounded-lg shadow text-center">
             <div className="mb-6 ">
                 <p className="text-orange-400 items-center justify-center flex mb-2">
-                    <HiFaceFrown className="w-20 h-20 bg-orange-200 rounded-full" />
+                    <IoAlertCircleOutline className="w-20 h-20 bg-orange-200 rounded-full" />
                 </p>
                 <h2 className=" text-4xl font-bold text-red-600 mb-8">Pembayaran tidak dapat di lanjutkan</h2>
 
