@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PaymentProps } from "@/type/payment";
 import crypto from "crypto";
-import { includes,  } from "zod";
-import { warn } from "console";
 
 export const POST = async (request: Request) => {
     try {
@@ -36,66 +34,65 @@ export const POST = async (request: Request) => {
         } else if (transaction_status === "capture") {
             if (fraud_status === "accept") {
                 newStatus = "paid";
-            } else if (fraud_status === "accept") {
-                newStatus === "paid"
             } else if (fraud_status === "challenge") {
-                newStatus === " challenge"
-            } else if ( fraud_status === "deny"){
+                newStatus = "challenge";
+            } else if (fraud_status === "deny") {
                 newStatus = "failed";
             }
         } else if (["cancel", "deny", "expire"].includes(transaction_status)) {
-            newStatus = "failed;"
+            newStatus = "failed";
         } else if (transaction_status === "pending") {
-            newStatus = "pending"
+            newStatus = "pending";
         }
 
         await prisma.$transaction(async (tx) => {
+            // Ambil data lama DULU sebelum update
+            const paymentBefore = await tx.payment.findUnique({
+                where: { reservationId },
+                include: { Reservation: { include: { Room: true } } }
+            });
+
+            if (!paymentBefore) {
+                throw new Error(`Payment untuk reservation ${reservationId} tidak ditemukan`);
+            }
+
             const updatedPayment = await tx.payment.update({
                 where: { reservationId },
                 data: {
                     method: payment_type || null,
                     status: newStatus,
                 },
-                include: {
-                    Reservation: { include: { Room: true } }
-                }
-            })
+            });
 
-            const room = updatedPayment.Reservation?.Room;
+            const room = paymentBefore.Reservation?.Room;
             if (!room) {
                 console.warn(`Reservation ${reservationId} tidak memiliki room`);
                 return;
             }
 
-            if (newStatus === "paid") {
-                if (updatedPayment.status !== "paid") {
-                    if (room.stock > 0) {
-                        await tx.room.update({
-                            where: { id: room.id },
-                            data: { stock: { decrement: 1 } },
-                        });
-                        console.log(`[SUCCES] stok kamar ${room.name} di kurangi - sisa ${room.stock - 1}`);
-                    } else {
-                        console.warn(`{WARNING} Stok ${room.name} sudah 0, tapi payment paid`);
-                    }
-                }
-            } else if (includes(newStatus)) {
-                if (updatedPayment.status === "paid") {
+            // Logic stock yang benar
+            if (newStatus === "paid" && paymentBefore.status !== "paid") {
+                if (room.stock > 0) {
                     await tx.room.update({
                         where: { id: room.id },
-                        data: { stock: { increment: 1 }, }
+                        data: { stock: { decrement: 1 } },
                     });
-                    console.log(`[REFUND] stok kamar ${room.name} di kembalikan`);
+                    console.log(`[SUCCESS] stok ${room.name} dikurangi, sisa ${room.stock - 1}`);
                 }
+            } 
+            // Refund stock kalau status berubah ke failed/cancel dari paid
+            else if (["failed", "challenge"].includes(newStatus) && paymentBefore.status === "paid") {
+                await tx.room.update({
+                    where: { id: room.id },
+                    data: { stock: { increment: 1 } },
+                });
+                console.log(`[REFUND] stok ${room.name} dikembalikan`);
             }
         });
-        return NextResponse.json(
-            { success: true, status: newStatus },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Midtrans Notification Error", error);
-        return NextResponse.json({ success: false, }, { status: 200 })
 
+        return NextResponse.json({ success: true, status: newStatus }, { status: 200 });
+    } catch (error) {
+        console.error("Midtrans Notification Error:", error);
+        return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Unknown error" }, { status: 200 });
     }
-}
+};
