@@ -1,82 +1,96 @@
 import { NextResponse } from "next/server";
-import Midtrans from "midtrans-client";
-import { reservationProps } from "@/type/reservation";
 import { prisma } from "@/lib/prisma";
-
-const snap = new Midtrans.Snap({
-    isProduction: false,
-    serverKey: process.env.MIDTRANS_SERVER_KEY,
-    clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY,
-});
+import crypto from "crypto";
 
 export const POST = async (request: Request) => {
+    console.log("🚀 [MIDTRANS] WEBHOOK DITERIMA!");
+
     try {
-        const reservation: reservationProps = await request.json()
-        
-        if (!reservation?.id || !reservation?.Payment || !reservation?.roomId) {
-            return NextResponse.json({ error: "Data reservasi tidak lengkap" }, { status: 400 });
+        const body = await request.json();
+        console.log("📦 Body lengkap dari Midtrans:", JSON.stringify(body, null, 2));
+
+        const {
+            order_id: reservationId,
+            transaction_status,
+            payment_type,
+            fraud_status,
+            status_code,
+            gross_amount,
+            signature_key,
+        } = body;
+
+        if (!reservationId) {
+            console.error("❌ Missing order_id");
+            return NextResponse.json({ error: "Missing order_id" }, { status: 400 });
         }
 
-        const room = await prisma.room.findUnique({
-            where :{ id: reservation.roomId},
-            select :{ stock: true, name: true},
-        });
-        if (!room) {
-            return NextResponse.json({error: "Kamar tidak di temukan"},{status:404})
-        }
-        if(room.stock <= 0) {
-            return NextResponse.json({
-                error:"Maaf, kamar ini sudah di pesan oleh tamu lain",roomName: room.name,
-            },{status:409});
+        console.log(`🔑 Reservation ID: ${reservationId} | Status: ${transaction_status} | Payment Type: ${payment_type || "null"}`);
+
+        // === SIGNATURE VERIFICATION ===
+        const grossAmountStr = gross_amount.toString().replace(/[^0-9]/g, "");
+        const hashString = `${reservationId}${status_code}${grossAmountStr}${process.env.MIDTRANS_SERVER_KEY}`;
+        const hash = crypto.createHash("sha512").update(hashString).digest("hex");
+
+        if (signature_key !== hash) {
+            console.error("❌ Invalid signature!");
+            return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
         }
 
-        const payment = reservation.Payment;
-        if (
-            payment.snapToken &&
-            payment.snapExpiry &&
-            payment.snapExpiry > new Date()
-        ) {
-            return NextResponse.json({ token: payment.snapToken });
+        console.log("✅ Signature valid");
+
+        // === Tentukan status baru ===
+        let newStatus = "pending";
+        if (transaction_status === "settlement") newStatus = "paid";
+        else if (transaction_status === "capture") {
+            if (fraud_status === "accept") newStatus = "paid";
+            else if (fraud_status === "challenge") newStatus = "challenge";
+            else if (fraud_status === "deny") newStatus = "failed";
+        } else if (["cancel", "deny", "expire"].includes(transaction_status)) {
+            newStatus = "failed";
         }
-        const parameter = {
-            transaction_details: {
-                order_id: reservation.id,
-                gross_amount: reservation.Payment?.amount || 0,
-            },
-            credit_card: {
-                secure: true,
-            },
-            customer_details: {
-                first_name: reservation.User?.name || "Custemer",
-                email: reservation.User?.email || "customer@example.com",
-                phone: reservation.User?.phone || "",
-            },
-            expiry: {
-                unit: "hour",
-                duration: 24,
+
+        console.log(`🔄 Akan update status menjadi: ${newStatus}`);
+
+        // === TRANSACTION PRISMA ===
+        await prisma.$transaction(async (tx) => {
+            const paymentBefore = await tx.payment.findUnique({
+                where: { reservationId },
+                include: { Reservation: { include: { Room: true } } }
+            });
+
+            if (!paymentBefore) throw new Error(`Payment ${reservationId} tidak ditemukan`);
+
+            await tx.payment.update({
+                where: { reservationId },
+                data: {
+                    method: payment_type || null,
+                    status: newStatus,
+                }
+            });
+
+            const room = paymentBefore.Reservation?.Room;
+            if (newStatus === "paid" && paymentBefore.status !== "paid" && room) {
+                if (room.stock > 0) {
+                    await tx.room.update({
+                        where: { id: room.id },
+                        data: { stock: { decrement: 1 } }
+                    });
+                    console.log(`✅ Stok ${room.name} dikurangi`);
+                }
+            } else if (["failed", "challenge"].includes(newStatus) && paymentBefore.status === "paid" && room) {
+                await tx.room.update({
+                    where: { id: room.id },
+                    data: { stock: { increment: 1 } }
+                });
+                console.log(`🔄 Stok ${room.name} dikembalikan (refund)`);
             }
-        };
-
-        const transaction = await snap.createTransaction(parameter);
-        const token = transaction.token;
-
-        if (!token) {
-            throw new Error("Gagal Mendapatkan token dari midtrans")
-        };
-
-        await prisma.payment.update({
-            where: { id: payment.id },
-            data: {
-                snapToken: token,
-                snapExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            }
         });
-        return NextResponse.json({ token })
+
+        console.log(`🎉 BERHASIL update Payment → status: ${newStatus}, method: ${payment_type}`);
+        return NextResponse.json({ success: true, status: newStatus }, { status: 200 });
+
     } catch (error) {
-        console.error("Error generate snap token", error);
-        
-        return NextResponse.json({
-            error: "Gagal memproses pembayaran"
-        }, { status: 500 })
+        console.error("💥 Midtrans Webhook Error:", error);
+        return NextResponse.json({ success: false, error: (error as Error).message }, { status: 200 });
     }
-}
+};
