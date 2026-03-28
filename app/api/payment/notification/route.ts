@@ -11,7 +11,7 @@ export const POST =async (request:Request) => {
     let responseData =  null
 
     const transactionStatus = data.transaction_status;
-    const paymenType =  data.payment_type || null;
+    const paymentType =  data.payment_type || null;
     const fraudStatus =  data.fraud_status;
     const statuCode =  data.status_code;
     const grosAmont =  data.gross_amount;
@@ -24,48 +24,83 @@ export const POST =async (request:Request) => {
             return NextResponse.json({error: "Mising signature key"},{status:400 })
 
         let newStatus = "pending";
-        if (transactionStatus === "settlement") newStatus = "paid";
-        else if ( transactionStatus === "capture") {
-            if (fraudStatus === "accept") newStatus = "paid";
-            else if (fraudStatus === "challenge") newStatus = "challenge";
-            else if (fraudStatus === "deny") newStatus = "failed";
-            else if (["cencel", "deny", "expire"].includes(transactionStatus)) {
-                newStatus = "failed"
-            }
+
+  if (transactionStatus === "settlement") {
+    newStatus = "paid";
+  } else if (transactionStatus === "capture") {
+    if (fraudStatus === "accept") newStatus = "paid";
+    else if (fraudStatus === "challenge") newStatus = "challenge";
+    else newStatus = "failed";
+  } else if (["cancel", "deny", "expire"].includes(transactionStatus)) {
+    newStatus = "failed";
+  } else if (transactionStatus === "pending") {
+    newStatus = "pending";
+  } else {
+    newStatus = "failed"; // safety
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const paymentBefore = await tx.payment.findUnique({
+        where: { reservationId },
+        include: {
+          Reservation: {
+            include: { Room: true },
+          },
+        },
+      });
+
+      if (!paymentBefore) {
+        throw new Error(`Payment dengan reservationId ${reservationId} tidak ditemukan`);
+      }
+
+      // Update payment
+      await tx.payment.update({
+        where: { reservationId },
+        data: {
+          method: paymentType,
+          status: newStatus,
+        },
+      });
+
+      const room = paymentBefore.Reservation?.Room;
+
+      // Stock logic
+      if (newStatus === "paid" && paymentBefore.status !== "paid" && room) {
+        if (room.stock > 0) {
+          await tx.room.update({
+            where: { id: room.id },
+            data: { stock: { decrement: 1 } },
+          });
         }
-
-        await prisma.$transaction( async(tx) => {
-            const paymentBefore = await tx.payment.findUnique({
-                where: {reservationId},
-                include: {Reservation: {include: {Room: true}}}
-            }); 
-            if (!paymentBefore) throw new Error (`Payment ${reservationId} tidak di temukan`)
-
-                await tx.payment.update({
-                    where: {reservationId},
-                    data: {
-                        method: paymenType,
-                        status: newStatus,
-                    }
-                });
-                const room = paymentBefore.Reservation?.Room;
-                if (newStatus === "paid" && paymentBefore.status !== "paid" && room) {
-                    if (room.stock > 0){
-                        await tx.room.update({
-                            where: {id: room.id},
-                            data: { stock: {decrement: 1}}
-                        })
-                    } else if (["failed", "challenge"].includes(newStatus) && paymentBefore.status ===
-                "paid" && room) {
-                    await tx.room.update ({
-                        where: {id: room.id},
-                        data: {stock: {increment: 1}}
-                    })
-                }} return NextResponse.json({
-                    success:true,
-                    status: newStatus
-                },{status: 200})
+      } else if (["failed", "challenge"].includes(newStatus) && paymentBefore.status === "paid" && room) {
+        await tx.room.update({
+          where: { id: room.id },
+          data: { stock: { increment: 1 } },
         });
+      }
+    });
+
+    // Response sukses ke Midtrans
+    return NextResponse.json(
+      {
+        success: true,
+        status: newStatus,
+        message: `Payment ${reservationId} updated to ${newStatus}`,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Midtrans webhook error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+};
 
         
 
@@ -109,9 +144,9 @@ export const POST =async (request:Request) => {
         //             where: {reservationId}
         //         })
         //         responseData = transaction
-        // }
-        return NextResponse.json({responseData}, {status: 200})
-}
+//         // }
+//         return NextResponse.json({responseData}, {status: 200})
+// }
 
 
 
