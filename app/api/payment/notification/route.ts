@@ -44,7 +44,7 @@ export const POST =async (request:Request) => {
                     where: {reservationId}
                 })
                 responseData = transaction
-        } else if (transactionStatus == "cencel" || transactionStatus == "deny" || transactionStatus ==
+        } else if (transactionStatus == "cancel" || transactionStatus == "deny" || transactionStatus ==
             "expire"
         ) {
             const transaction =  await prisma.payment.update({
