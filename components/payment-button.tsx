@@ -64,14 +64,18 @@ const PaymentButton = ({ reservation }: { reservation: reservationProps }) => {
                 window.snap.pay(token, {
                     onSuccess: (result) => {
                         console.log("Payment Success:", result);
-                        window.location.reload();
+                        const reservationId = reservation.id
+                        window.location.href = `/payment/success?order_id=${reservationId}`
                     },
                     onPending: (result) => {
                         console.log("Payment Pending:", result);
-                        window.location.reload();
+                        const reservationId = reservation.id;
+                        window.location.href = `/payment/pending?oder_id=${reservationId}`;
                     },
-                    onError: (result) => {
+                    onError: (result) => {                        
                         console.error("Payment Error:", result);
+                        const reservationId = reservation.id;
+                        window.location.href = `/payment/failure?order_id=${reservationId}`
                         setError({ type: "general", message: "Pembayaran gagal. Silakan coba lagi." });
                     },
                     onClose: () => {
