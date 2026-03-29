@@ -8,8 +8,8 @@ const PaymentStatus = ({
   status, 
   expiryDate, 
   reservationId, 
-  roomStock  // ← NEW prop
-}: PaymentStatusProps & { roomStock?: number }) => {
+  roomStock
+}: PaymentStatusProps ) => {
  
   const currentStatus = status || "unknown";
   const now = new Date();
@@ -25,15 +25,13 @@ const PaymentStatus = ({
   }
 
   if (currentStatus === "unpaid") {
-    if (!expiryDate) {
+    if (!expiryDate && roomStock >= 1) {
       return (
         <div className="text-blue-700 bg-blue-100 rounded-sm font-medium text-center py-3 text-sm">
           The reservation is pending payment processing. Click "Pay Now" to continue.
         </div>
       );
     }
-
-    // NEW: Jika stock kamar sudah 0 → hentikan countdown & tampilkan status Out of Stock
     if (roomStock !== undefined && roomStock !== null && roomStock <= 0) {
       return (
         <div className="text-red-700 bg-red-100 rounded-sm font-bold text-center py-3 text-sm">
@@ -49,14 +47,12 @@ const PaymentStatus = ({
         </div>
       );
     }
-
-    // Stock masih ada → lanjutkan countdown seperti biasa
     return (
       <div className="text-red-500 bg-red-100 rounded-sm font-bold text-center py-2 text-sm flex flex-col items-center gap-1">
         <span>Please make payment immediately to secure your reservation</span>
         <div className="flex items-center gap-2 text-xs font-medium">
           <span className="text-gray-600">Ends in :</span>
-          <CountDown expiryDate={expiryDate} reservationId={reservationId} />
+          {expiryDate && <CountDown expiryDate={expiryDate} reservationId={reservationId} />}
         </div>
       </div>
     );

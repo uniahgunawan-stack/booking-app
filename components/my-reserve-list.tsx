@@ -88,25 +88,16 @@ const MyReserveList = async () => {
                             </div>
                         </div>
                         {/* ButtonPay */}
-                        <div className="flex justify-center items-end md:items-end md:justify-end absolute inset-3 capitalize">
-                            
+                        <div className="flex justify-center items-end md:items-end md:justify-end absolute inset-3">
+                            {/* 1. CEK STOK DULU: Jika stok habis, jangan biarkan bayar */}
                             {isOutOfStock ? (
                                 <Link
-                                    href={`/room`}
-                                    className="px-6 py-1 bg-blue-500  text-white rounded-md hover:bg-blue-600"
+                                    href={`/rooms`}
+                                    className="px-6 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
                                 >
-                                    other rooms
+                                    Book Again
                                 </Link>
-                            ) : 
-                             isExpired ? (
-                                <Link
-                                    href={`/rooms/${item.Room.id}?name=${encodeURIComponent(item.User?.name || "")}&phone=${encodeURIComponent(item.User?.phone || "")}`}
-                                    className="px-6 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                                >
-                                    Expired - Book Again
-                                </Link>
-                            
-                             ):isPaid ? (
+                            ) : isPaid ? (
                                 <Link
                                     href={`/myreservation/${item.id}`}
                                     className="px-6 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
@@ -120,12 +111,12 @@ const MyReserveList = async () => {
                                 >
                                     Finished Payment
                                 </Link>
-                            ) : isPaid ? (
+                            ) : isExpired ? (
                                 <Link
-                                    href={`/myreservation/${item.id}`}
-                                    className="px-6 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                                    href={`/rooms/${item.Room.id}?name=${encodeURIComponent(item.User?.name || "")}&phone=${encodeURIComponent(item.User?.phone || "")}`}
+                                    className="px-6 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
                                 >
-                                    View Detail
+                                    Expired - Book Again
                                 </Link>
                             ) : isPendingNoSnap ? (
                                 <Link

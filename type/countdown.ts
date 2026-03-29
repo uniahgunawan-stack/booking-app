@@ -7,4 +7,5 @@ export interface PaymentStatusProps{
     status: string | undefined,
     expiryDate: Date | null | undefined,
     reservationId: string;
+    roomStock: number
 }
