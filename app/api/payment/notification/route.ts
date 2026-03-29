@@ -11,7 +11,7 @@ export const POST =async (request:Request) => {
     let responseData =  null
 
     const transactionStatus = data.transaction_status;
-    const paymentType =  data.payment_type || null;
+    const paymenType =  data.payment_type || null;
     const fraudStatus =  data.fraud_status;
     const statuCode =  data.status_code;
     const grosAmont =  data.gross_amount;
@@ -22,52 +22,103 @@ export const POST =async (request:Request) => {
 
         if (signatureKey !== hash)
             return NextResponse.json({error: "Mising signature key"},{status:400 })
+
+        let newStatus = "pending";
+        if (transactionStatus === "settlement") newStatus = "paid";
+        else if ( transactionStatus === "capture") {
+            if (fraudStatus === "accept") newStatus = "paid";
+            else if (fraudStatus === "challenge") newStatus = "challenge";
+            else if (fraudStatus === "deny") newStatus = "failed";
+            else if (["cancel", "deny", "expire"].includes(transactionStatus)) {
+                newStatus = "failed"
+            }
+        }
+
+
+
+        try {
+            await prisma.$transaction( async(tx) => {
+            const paymentBefore = await tx.payment.findUnique({
+                where: {reservationId},
+                include: {Reservation: {include: {Room: true}}}
+            }); 
+            if (!paymentBefore) throw new Error (`Payment ${reservationId} tidak di temukan`)
+
+                await tx.payment.update({
+                    where: {reservationId},
+                    data: {
+                        method: paymenType,
+                        status: newStatus,
+                    }
+                });
+                const room = paymentBefore.Reservation?.Room;
+                if (newStatus === "paid" && paymentBefore.status !== "paid" && room) {
+                    if (room.stock > 0){
+                        await tx.room.update({
+                            where: {id: room.id},
+                            data: { stock: {decrement: 1}}
+                        })
+                    } else if (["failed", "challenge"].includes(newStatus) && paymentBefore.status ===
+                "paid" && room) {
+                    await tx.room.update ({
+                        where: {id: room.id},
+                        data: {stock: {increment: 1}}
+                    })
+                }} return NextResponse.json({
+                    success:true,
+                    status: newStatus
+                },{status: 200})
+        });
+        } catch (error) {
+             return NextResponse.json({responseData}, {status: 200})
+        }
         
 
-        if(transactionStatus == "capture") {
-            if (fraudStatus == "accept") {
-                const transaction =  await prisma.payment.update({
-                    data: {
-                        method: paymentType,
-                        status:"paid"
-                    },
-                    where: {reservationId}
-                })
-                responseData = transaction
-            }
-        } else if (transactionStatus == "settlement") {
-            const transaction =  await prisma.payment.update({
-                    data: {
-                        method: paymentType,
-                        status:"paid"
-                    },
-                    where: {reservationId}
-                })
-                responseData = transaction
-        } else if (transactionStatus == "cancel" || transactionStatus == "deny" || transactionStatus ==
-            "expire"
-        ) {
-            const transaction =  await prisma.payment.update({
-                    data: {
-                        method: paymentType,
-                        status:"failure"
-                    },
-                    where: {reservationId}
-                })
-                responseData = transaction
-        } else if (transactionStatus == "pending") {
-             const transaction =  await prisma.payment.update({
-                    data: {
-                        method: paymentType,
-                        status:"pending"
-                    },
-                    where: {reservationId}
-                })
-                responseData = transaction
+        
+
+        // if(transactionStatus == "capture") {
+        //     if (fraudStatus == "accept") {
+        //         const transaction =  await prisma.payment.update({
+        //             data: {
+        //                 method: paymenType,
+        //                 status:"paid"
+        //             },
+        //             where: {reservationId}
+        //         })
+        //         responseData = transaction
+        //     }
+        // } else if (transactionStatus == "settlement") {
+        //     const transaction =  await prisma.payment.update({
+        //             data: {
+        //                 method: paymenType,
+        //                 status:"paid"
+        //             },
+        //             where: {reservationId}
+        //         })
+        //         responseData = transaction
+        // } else if (transactionStatus == "cencel" || transactionStatus == "deny" || transactionStatus ==
+        //     "expire"
+        // ) {
+        //     const transaction =  await prisma.payment.update({
+        //             data: {
+        //                 method: paymenType,
+        //                 status:"failure"
+        //             },
+        //             where: {reservationId}
+        //         })
+        //         responseData = transaction
+        // } else if (transactionStatus == "pending") {
+        //      const transaction =  await prisma.payment.update({
+        //             data: {
+        //                 method: paymenType,
+        //                 status:"pending"
+        //             },
+        //             where: {reservationId}
+        //         })
+        //         responseData = transaction
         // }
-        return NextResponse.json({responseData}, {status: 200})
+       
 }
-};
 
 
 

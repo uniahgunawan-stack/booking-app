@@ -55,6 +55,8 @@ const PaymentButton = ({ reservation }: { reservation: reservationProps }) => {
                 if (!token || typeof token !== "string") {
                     throw new Error("Token tidak valid atau tidak ditemukan");
                 }
+                console.log("token yang di terima", token);
+                
 
                 if (typeof window.snap === "undefined" || !window.snap.pay) {
                     throw new Error("Snap.js belum siap. Refresh halaman dan coba lagi.");
