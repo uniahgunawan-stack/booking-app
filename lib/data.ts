@@ -113,7 +113,7 @@ export const getDisableRoomById = async (roomId: string) => {
       },
       where: {
         roomId: roomId,
-        Payment: { status: { not: "failur" } }
+        Payment: { status: { notIn:[ "failure","cancelled"] } }
       }
     })
     return result;
@@ -134,20 +134,9 @@ export const getReservationUserById = async () => {
     const result = await prisma.reservation.findMany({
       where: {
         userId: session.user.id,
-        // OR: [
-        //   { Payment: { is: { status: "paid" } } },
-        //   {
-        //     Payment: {
-        //       is: {
-        //         status: "unpaid",
-        //         snapExpiry: { gt: now }
-        //       }
-        //     }
-        //   }
-        // ]
       },
       include: {
-        Room: { select: { name: true, image: true, price: true } },
+        Room: { select: { name: true, image: true, price: true, id:true, stock: true } },
         User: { select: { name: true, email: true, phone: true } },
         Payment: true
       },

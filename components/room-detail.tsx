@@ -5,7 +5,15 @@ import { IoBan, IoCheckmark, IoPeopleOutline } from "react-icons/io5";
 import { formatCurrency } from "@/lib/utils";
 import ReserveForm from "@/components/reserve-form";
 
-const RoomDetail = async ({ roomId }: { roomId: string }) => {
+const RoomDetail = async ({
+    roomId,
+    initialName = "",
+    initialPhone = ""
+}: {
+    roomId: string,
+    initialName?: string,
+    initialPhone?: string
+}) => {
     const [room, disableDate] = await Promise.all([getRoomDetailById(roomId), getDisableRoomById(roomId)]);
     if (!room || !disableDate) return notFound();
     return (
@@ -49,15 +57,19 @@ const RoomDetail = async ({ roomId }: { roomId: string }) => {
                     {/* Reservation form */}
                     {room.stock === 0 ? (
                         <div className="flex flex-col items-center justify-center py-4 space-y-2 text-red-600">
-                            <IoBan className="size-12"/>
+                            <IoBan className="size-12" />
                             <span className="font-bold text-xl uppercase tracking-wide">Room Not Available</span>
                             <p className="text-sm text-center text-gray-900">Sorry, this room is out of stock</p>
                         </div>
-                    ):
-                    (
-                       <ReserveForm room={room} disableDate={disableDate} /> 
-                    )}
-                    
+                    ) :
+                        (
+                            <ReserveForm
+                                room={room}
+                                disableDate={disableDate}
+                                initialName={initialName}
+                                initialPhone={initialPhone} />
+                        )}
+
                 </div>
             </div>
         </div>

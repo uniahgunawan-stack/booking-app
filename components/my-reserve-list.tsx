@@ -4,7 +4,7 @@ import { differenceInCalendarDays } from "date-fns";
 import Image from "next/image"
 import Link from "next/link";
 import PaymentStatus from "./PaymentStatus";
-import ReservationEmpty from "./reservation-empty";
+import ReservationEmpty from "@/components/reservation-empty";
 
 const MyReserveList = async () => {
     const reservation = await getReservationUserById();
@@ -17,15 +17,20 @@ const MyReserveList = async () => {
                 const payment = item.Payment;
                 const hasPayment = !!payment;
                 const isPaid = payment?.status === "paid";
+                const isCanceling = payment?.status === "cancelled";
                 const isUnpaidWithExpiry = payment?.status === "unpaid" && payment?.snapExpiry && new Date(payment.snapExpiry) > new Date();
                 const isExpired = payment?.status === "unpaid" && payment?.snapExpiry && new Date(payment.snapExpiry) <= new Date();
                 const isPendingNoSnap = !hasPayment || (payment?.status === "unpaid" && !payment?.snapExpiry);
+                const isOutOfStock = payment?.status === "unpaid" && item.Room.stock === 0;
 
                 let displayStatus = "Unknown";
+
                 if (isPaid) displayStatus = "Paid";
+                else if (isOutOfStock) displayStatus = "Out Of Stock"
                 else if (isUnpaidWithExpiry) displayStatus = "Pending Payment";
                 else if (isExpired) displayStatus = "Expired";
                 else if (isPendingNoSnap) displayStatus = "Waiting for Payment";
+                else if (isCanceling) displayStatus = "cancelled"
 
                 return (
                     <div className="bg-white shadow pb-4 mb-4 md:pb-0 relative" key={item.id}>
@@ -51,6 +56,7 @@ const MyReserveList = async () => {
                                         status={item.Payment?.status}
                                         expiryDate={item.Payment?.snapExpiry}
                                         reservationId={item.id}
+                                        roomStock={item.Room.stock}
                                     />
                                     <div className="flex items-center justify-between text-sm font-medium text-gray-900 truncate">
                                         <span>Room Name :</span>
@@ -82,8 +88,25 @@ const MyReserveList = async () => {
                             </div>
                         </div>
                         {/* ButtonPay */}
-                        <div className="flex justify-center items-end md:items-end md:justify-end absolute inset-3">
-                            {isPaid ? (
+                        <div className="flex justify-center items-end md:items-end md:justify-end absolute inset-3 capitalize">
+                            
+                            {isOutOfStock ? (
+                                <Link
+                                    href={`/room`}
+                                    className="px-6 py-1 bg-blue-500  text-white rounded-md hover:bg-blue-600"
+                                >
+                                    other rooms
+                                </Link>
+                            ) : 
+                             isExpired ? (
+                                <Link
+                                    href={`/rooms/${item.Room.id}?name=${encodeURIComponent(item.User?.name || "")}&phone=${encodeURIComponent(item.User?.phone || "")}`}
+                                    className="px-6 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                                >
+                                    Expired - Book Again
+                                </Link>
+                            
+                             ):isPaid ? (
                                 <Link
                                     href={`/myreservation/${item.id}`}
                                     className="px-6 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
@@ -97,12 +120,12 @@ const MyReserveList = async () => {
                                 >
                                     Finished Payment
                                 </Link>
-                            ) : isExpired ? (
+                            ) : isPaid ? (
                                 <Link
-                                    href={`/rooms`}
-                                    className="px-6 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                                    href={`/myreservation/${item.id}`}
+                                    className="px-6 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                                 >
-                                    Expired - Book Again
+                                    View Detail
                                 </Link>
                             ) : isPendingNoSnap ? (
                                 <Link
@@ -110,6 +133,13 @@ const MyReserveList = async () => {
                                     className="px-6 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
                                 >
                                     Pay Now
+                                </Link>
+                            ) : isCanceling ? (
+                                <Link
+                                    href={`/room/${item.Room.id}?name=${encodeURIComponent(item.User?.name || '')}&phone=${encodeURIComponent(item.User?.phone || '')}`}
+                                    className="bg-orange-500 hover:bg-orange-400 text-white px-6 py-1 rounded-lg"
+                                >
+                                    Reservation again
                                 </Link>
                             ) : (
                                 <Link
@@ -124,7 +154,7 @@ const MyReserveList = async () => {
                 )
             }
             )}
-        </div>
+        </div >
     )
 }
 
